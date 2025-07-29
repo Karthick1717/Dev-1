@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { getAttendance, addAttendance } = require("../controllers/attendanceController");
+const { upsertDailyAttendance } = require("../controllers/attendanceController");
 
-router.get("/:phone", getAttendance);
-router.post("/", addAttendance);
+router.post("/daily", upsertDailyAttendance); // POST /api/attendance/daily
 
 module.exports = router;

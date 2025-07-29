@@ -1,20 +1,27 @@
 const Salary = require("../models/Salary");
 
-exports.getSalary = async (req, res) => {
+exports.addOrUpdateSalary = async (req, res) => {
+  const { phone, month, basic, bonus, deductions } = req.body;
+
   try {
-    const data = await Salary.find({ phone: req.params.phone });
-    res.json(data);
+    let existing = await Salary.findOne({ phone, month });
+
+    if (!existing) {
+      const net = basic + bonus - deductions;
+      const newSalary = new Salary({ phone, month, basic, bonus, deductions, net });
+      await newSalary.save();
+      return res.status(201).json(newSalary);
+    }
+
+    // Update totals
+    existing.basic += basic;
+    existing.bonus += bonus;
+    existing.deductions += deductions;
+    existing.net = existing.basic + existing.bonus - existing.deductions;
+
+    await existing.save();
+    return res.status(200).json(existing);
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-};
-
-exports.addSalary = async (req, res) => {
-  try {
-    const newSalary = new Salary(req.body);
-    await newSalary.save();
-    res.status(201).json(newSalary);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
   }
 };

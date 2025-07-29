@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { getSalary, addSalary } = require("../controllers/salaryController");
+const { addOrUpdateSalary } = require("../controllers/salaryController");
 
-router.get("/:phone", getSalary);
-router.post("/", addSalary);
+router.post("/", addOrUpdateSalary); // POST /api/salary
 
 module.exports = router;
