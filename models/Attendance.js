@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const dailySchema = new mongoose.Schema({
-  day: { type: Number, required: true }, // day of the month (1-31)
+  day: { type: Number, required: true },
   status: { type: String, enum: ["Present", "Absent"], required: true },
 });
 
