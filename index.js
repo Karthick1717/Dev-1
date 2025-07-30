@@ -8,6 +8,16 @@ const attendanceRoutes = require("./routes/attendanceRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const faceRouter=require("./routes/faceRoutes")
 
+const fs = require("fs");
+const path = require("path");
+
+// ✅ Ensure uploads folder exists before server runs
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;

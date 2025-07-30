@@ -1,14 +1,14 @@
-// routes/faceRoutes.js
 const express = require("express");
-const router = express.Router();
 const multer = require("multer");
-const faceController = require("../controllers/faceController");
+const { registerFace } = require("../controllers/faceController");
 
-// Configure multer to store in memory (or use diskStorage if needed)
+const router = express.Router();
+
+// ✅ Store uploaded image in memory (required for Cloudinary base64 upload)
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
-// POST /face/register
-router.post("/register", upload.single("image"), faceController.registerFace);
+// ✅ Route for face registration
+router.post("/register", upload.single("image"), registerFace);
 
 module.exports = router;

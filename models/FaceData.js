@@ -6,10 +6,12 @@ const faceSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  imagePath: {
+  imageUrl: { // Changed from imagePath to imageUrl for clarity
     type: String,
     required: true,
   },
+}, {
+  timestamps: true // Optional: adds createdAt & updatedAt
 });
 
 module.exports = mongoose.model("Face", faceSchema);
