@@ -1,23 +1,14 @@
-const express = require('express');
+// routes/faceRoutes.js
+const express = require("express");
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const faceController = require('../controllers/faceController');
+const multer = require("multer");
+const faceController = require("../controllers/faceController");
 
-// Multer config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // folder to save images
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    cb(null, Date.now() + ext); // unique filename
-  }
-});
-
+// Configure multer to store in memory (or use diskStorage if needed)
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// POST /api/face/register
-router.post('/register', upload.single('image'), faceController.registerFace);
+// POST /face/register
+router.post("/register", upload.single("image"), faceController.registerFace);
 
 module.exports = router;

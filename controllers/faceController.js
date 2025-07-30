@@ -1,29 +1,29 @@
-const FaceData = require('../models/FaceData');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
+const Face = require("../models/FaceData");
 
 exports.registerFace = async (req, res) => {
-  const { phone } = req.body;
-
-  if (!req.file || !phone) {
-    return res.status(400).json({ message: 'Image and phone number are required' });
-  }
-
-  const imagePath = req.file.path;
-
   try {
-    let existing = await FaceData.findOne({ phone });
+    const { phone } = req.body;
+    const image = req.file;
 
-    if (existing) {
-      existing.imagePath = imagePath;
-      await existing.save();
-      return res.status(200).json({ message: 'Image updated successfully', data: existing });
+    if (!phone || !image) {
+      return res.status(400).json({ message: "Phone and image are required" });
     }
 
-    const faceData = new FaceData({ phone, imagePath });
-    await faceData.save();
+    const filePath = path.join(__dirname, `../uploads/${phone}.jpg`);
+    fs.writeFileSync(filePath, image.buffer); // Save image
 
-    res.status(201).json({ message: 'Face registered successfully', data: faceData });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const newFace = new Face({
+      phone,
+      imagePath: filePath,
+    });
+
+    await newFace.save();
+
+    res.status(200).json({ message: "Face registered successfully" });
+  } catch (err) {
+    console.error("Register face error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
