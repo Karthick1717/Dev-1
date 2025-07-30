@@ -1,6 +1,7 @@
 const Attendance = require("../models/Attendance");
 const User = require("../models/userModel");
 
+
 exports.upsertDailyAttendance = async (req, res) => {
   const { phone, month, day, status } = req.body;
 
@@ -11,33 +12,40 @@ exports.upsertDailyAttendance = async (req, res) => {
   try {
     let doc = await Attendance.findOne({ phone, month });
 
+   
+
     if (!doc) {
-      // No record exists for phone and month, create new
+      // No doc exists, create new
       doc = new Attendance({
         phone,
         month,
         records: [{ day, status }],
       });
     } else {
-      // Check if day record exists
-      const dayIndex = doc.records.findIndex((r) => r.day === day);
+      const existingDay = doc.records.find((r) => r.day === day);
 
-      if (dayIndex !== -1) {
-        // Update existing day record
-        doc.records[dayIndex].status = status;
+      if (existingDay) {
+        if (existingDay.status === status) {
+          // Same status already marked, no change
+          return res.status(200).json({ message: "Already marked", attendance: doc });
+        } else {
+          // Update to new status
+          existingDay.status = status;
+        }
       } else {
-        // Add new day record
+        // New day entry
         doc.records.push({ day, status });
       }
     }
 
     await doc.save();
-
-    res.status(200).json({ message: "Attendance updated", attendance: doc });
+    res.status(200).json({ message: "Attendance saved", attendance: doc });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+
 
 
 
@@ -117,6 +125,22 @@ exports.getAllStaff = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getStaffByPhone = async (req, res) => {
+  
+  try {
+    const staff = await User.findOne({ mobile: req.params.phone });
+
+    if (!staff) {
+      return res.status(404).json({ error: "Staff not found" });
+    }
+    res.json(staff);
+  } catch (error) {
+    console.error("Error fetching staff:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 
 
 

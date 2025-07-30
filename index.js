@@ -6,16 +6,9 @@ require('dotenv').config(); // To use environment variables
 const nurseRoutes = require("./routes/nurse");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
-const faceRouter=require("./routes/faceRoutes")
 
-const fs = require("fs");
-const path = require("path");
 
-// ✅ Ensure uploads folder exists before server runs
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+
 
 
 
@@ -39,7 +32,11 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api", nurseRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/salary", salaryRoutes);
-app.use("/face",faceRouter)
+
+
+
+
+
 
 
 // Start the server
