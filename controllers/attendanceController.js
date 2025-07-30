@@ -1,5 +1,5 @@
 const Attendance = require("../models/Attendance");
-
+const User = require("../models/userModel");
 
 exports.upsertDailyAttendance = async (req, res) => {
   const { phone, month, day, status } = req.body;
@@ -105,7 +105,7 @@ exports.getDailyStatus = async (req, res) => {
 
 exports.getAllStaff = async (req, res) => {
   try {
-    const records = await Attendance.find({}); // no filters, get all
+    const records = await User.find({}); // no filters, get all
 
     if (!records || records.length === 0) {
       return res.status(404).json({ message: "No attendance records found" });
