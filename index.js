@@ -6,7 +6,7 @@ require('dotenv').config(); // To use environment variables
 const nurseRoutes = require("./routes/nurse");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
-
+const faceRouter=require("./routes/faceRoutes")
 
 
 const app = express();
@@ -29,6 +29,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api", nurseRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/salary", salaryRoutes);
+app.use("/face",faceRouter)
 
 
 // Start the server
