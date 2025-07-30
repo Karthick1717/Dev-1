@@ -20,7 +20,7 @@ exports.registerFace = async (req, res) => {
 
     const newFace = new Face({
       phone,
-      imagePath: result.secure_url,
+      imageUrl: result.secure_url,
     });
 
     await newFace.save();
