@@ -105,18 +105,19 @@ exports.getDailyStatus = async (req, res) => {
 
 exports.getAllStaff = async (req, res) => {
   try {
-    const records = await User.find({}); // no filters, get all
+    const records = await User.find({ role: "Nurse" });
 
     if (!records || records.length === 0) {
-      return res.status(404).json({ message: "No attendance records found" });
+      return res.status(404).json({ message: "No nurse records found" });
     }
 
     res.status(200).json(records);
   } catch (err) {
-    console.error("Error fetching all attendance records:", err);
+    console.error("Error fetching all nurse records:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 
