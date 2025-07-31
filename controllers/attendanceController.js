@@ -1,49 +1,62 @@
 const Attendance = require("../models/Attendance");
 const User = require("../models/userModel");
-
-
 exports.upsertDailyAttendance = async (req, res) => {
-  const { phone, month, day, status } = req.body;
+  const { phone, month, day } = req.body;
 
-  if (!phone || !month || !day || !status) {
+  if (!phone || !month || !day) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
     let doc = await Attendance.findOne({ phone, month });
 
-   
+    const currentTime = new Date();
 
     if (!doc) {
-      // No doc exists, create new
+      // Create new attendance doc
       doc = new Attendance({
         phone,
         month,
-        records: [{ day, status }],
+        records: [{
+          day,
+          startTime: currentTime,
+        }],
       });
-    } else {
-      const existingDay = doc.records.find((r) => r.day === day);
+      await doc.save();
+      return res.status(200).json({ message: "Start time recorded", attendance: doc });
+    }
 
-      if (existingDay) {
-        if (existingDay.status === status) {
-          // Same status already marked, no change
-          return res.status(200).json({ message: "Already marked", attendance: doc });
-        } else {
-          // Update to new status
-          existingDay.status = status;
-        }
-      } else {
-        // New day entry
-        doc.records.push({ day, status });
+    const existingDay = doc.records.find((r) => r.day === day);
+
+    if (existingDay) {
+      if (existingDay.startTime && !existingDay.endTime) {
+        // Set end time and calculate total hours
+        existingDay.endTime = currentTime;
+        existingDay.totalHours =
+          (new Date(existingDay.endTime) - new Date(existingDay.startTime)) / (1000 * 60 * 60); // hours
+        await doc.save();
+        return res.status(200).json({ message: "End time recorded", attendance: doc });
+      } else if (existingDay.startTime && existingDay.endTime) {
+        // Already completed check-in and out
+        return res.status(200).json({ message: "Already marked both start and end", attendance: doc });
       }
+    } else {
+      // New day entry with startTime
+      doc.records.push({
+        day,
+        startTime: currentTime,
+      });
+      await doc.save();
+      return res.status(200).json({ message: "Start time recorded", attendance: doc });
     }
 
     await doc.save();
-    res.status(200).json({ message: "Attendance saved", attendance: doc });
+    res.status(200).json({ message: "Attendance updated", attendance: doc });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 
