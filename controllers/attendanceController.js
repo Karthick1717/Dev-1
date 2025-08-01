@@ -1,5 +1,7 @@
 const Attendance = require("../models/Attendance");
 const User = require("../models/userModel");
+
+
 exports.upsertDailyAttendance = async (req, res) => {
   const { phone, month, day } = req.body;
 
@@ -9,11 +11,10 @@ exports.upsertDailyAttendance = async (req, res) => {
 
   try {
     let doc = await Attendance.findOne({ phone, month });
-
     const currentTime = new Date();
 
     if (!doc) {
-      // Create new attendance doc
+      // Create new attendance doc with startTime
       doc = new Attendance({
         phone,
         month,
@@ -26,22 +27,11 @@ exports.upsertDailyAttendance = async (req, res) => {
       return res.status(200).json({ message: "Start time recorded", attendance: doc });
     }
 
-    const existingDay = doc.records.find((r) => r.day === day);
+    // Find day record
+    let existingDay = doc.records.find((r) => r.day === day);
 
-    if (existingDay) {
-      if (existingDay.startTime && !existingDay.endTime) {
-        // Set end time and calculate total hours
-        existingDay.endTime = currentTime;
-        existingDay.totalHours =
-          (new Date(existingDay.endTime) - new Date(existingDay.startTime)) / (1000 * 60 * 60); // hours
-        await doc.save();
-        return res.status(200).json({ message: "End time recorded", attendance: doc });
-      } else if (existingDay.startTime && existingDay.endTime) {
-        // Already completed check-in and out
-        return res.status(200).json({ message: "Already marked both start and end", attendance: doc });
-      }
-    } else {
-      // New day entry with startTime
+    if (!existingDay) {
+      // No record for this day, create one with startTime
       doc.records.push({
         day,
         startTime: currentTime,
@@ -50,13 +40,26 @@ exports.upsertDailyAttendance = async (req, res) => {
       return res.status(200).json({ message: "Start time recorded", attendance: doc });
     }
 
+    if (!existingDay.startTime) {
+      // If startTime missing, set it now
+      existingDay.startTime = currentTime;
+      existingDay.endTime = undefined;
+      existingDay.totalHours = undefined;
+
+      await doc.save();
+      return res.status(200).json({ message: "Start time recorded", attendance: doc });
+    }
+
+    // Update endTime on every scan after startTime
+    existingDay.endTime = currentTime;
+    existingDay.totalHours = (existingDay.endTime - existingDay.startTime) / (1000 * 60 * 60); // hours
+
     await doc.save();
-    res.status(200).json({ message: "Attendance updated", attendance: doc });
+    return res.status(200).json({ message: "End time updated", attendance: doc });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 
 
