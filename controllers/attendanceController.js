@@ -1,7 +1,6 @@
 const Attendance = require("../models/Attendance");
 const User = require("../models/userModel");
-const Salary=require("../models/Salary")
-
+const Salary = require("../models/Salary");
 
 exports.upsertDailyAttendance = async (req, res) => {
   const { phone, month, day } = req.body;
@@ -46,33 +45,29 @@ exports.upsertDailyAttendance = async (req, res) => {
       existingDay.startTime = currentTime;
       existingDay.endTime = undefined;
       existingDay.totalHours = undefined;
-
       await doc.save();
       return res.status(200).json({ message: "Start time recorded", attendance: doc });
     }
 
     // Update endTime on every scan after startTime
     existingDay.endTime = currentTime;
-    existingDay.totalHours = (existingDay.endTime - existingDay.startTime) / (1000 * 60 * 60); // hours
-
-  
-
-
+    existingDay.totalHours = (existingDay.endTime - existingDay.startTime) / (1000 * 60 * 60); // in hours
+    const hoursWorked = existingDay.totalHours;
 
     await doc.save();
 
-
+    // 🔍 Fetch user's per-day salary
     const user = await User.findOne({ mobile: phone });
-    if (!user) return res.status(404).json({ error: "User not found for salary" });
+    if (!user) return res.status(404).json({ error: "User not found for salary calculation" });
 
     const perDaySalary = user.salary || 0;
     const dailyWage = hoursWorked * perDaySalary;
 
-    // 🔍 Try to find salary record
+    // 💰 Update or create Salary document
     let salaryDoc = await Salary.findOne({ phone, month });
 
     if (!salaryDoc) {
-      // ✅ Create new if not exists
+      // Create new salary doc
       salaryDoc = new Salary({
         phone,
         month,
@@ -82,11 +77,11 @@ exports.upsertDailyAttendance = async (req, res) => {
         days: [],
       });
     } else {
-      // 🔄 Remove previous entry for the same day (to avoid duplicates)
+      // Remove existing day entry (if any) to prevent duplicates
       salaryDoc.days = salaryDoc.days.filter(d => d.date !== day);
     }
 
-    // ➕ Add new day's data
+    // ➕ Add current day's data
     salaryDoc.days.push({
       date: day,
       hoursWorked,
@@ -97,17 +92,19 @@ exports.upsertDailyAttendance = async (req, res) => {
     const totalWages = salaryDoc.days.reduce((sum, d) => sum + d.dailyWage, 0);
     salaryDoc.net = totalWages + salaryDoc.bonus - salaryDoc.deductions;
 
-    console.log(salaryDoc)
-
-    // 💾 Save the document
     await salaryDoc.save();
-    
-    return res.status(200).json({ message: "End time updated", attendance: doc });
+
+    return res.status(200).json({
+      message: "End time updated and salary recorded",
+      attendance: doc,
+      salary: salaryDoc,
+    });
+
   } catch (err) {
+    console.error("Error in upsertDailyAttendance:", err);
     res.status(500).json({ error: err.message });
   }
 };
-
 
 
 
