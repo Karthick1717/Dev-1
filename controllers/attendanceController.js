@@ -1,5 +1,6 @@
 const Attendance = require("../models/Attendance");
 const User = require("../models/userModel");
+const Salary=require("../models/Salary")
 
 
 exports.upsertDailyAttendance = async (req, res) => {
