@@ -34,8 +34,6 @@ const updateNurseEmail = async (req, res) => {
   }
 };
 
-const User = require("../models/userModel"); // Adjust path if needed
-
 const updateSalary = async (req, res) => {
   const { salary, mobile } = req.body;
 

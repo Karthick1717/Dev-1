@@ -54,6 +54,10 @@ exports.upsertDailyAttendance = async (req, res) => {
     existingDay.endTime = currentTime;
     existingDay.totalHours = (existingDay.endTime - existingDay.startTime) / (1000 * 60 * 60); // hours
 
+
+
+    
+
     await doc.save();
     return res.status(200).json({ message: "End time updated", attendance: doc });
   } catch (err) {
