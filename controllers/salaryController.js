@@ -1,4 +1,60 @@
 const Salary = require("../models/Salary");
+const User = require("../models/userModel");
+
+
+exports.updateOrCreateSalary = async (req, res) => {
+  const { phone, month, day, hoursWorked } = req.body;
+
+  try {
+    // 🔍 Find user by mobile
+    const user = await User.findOne({ mobile: phone });
+    if (!user) return res.status(404).json({ error: "User not found for salary" });
+
+    const perDaySalary = user.salary || 0;
+    const dailyWage = hoursWorked * perDaySalary;
+
+    // 🔍 Try to find salary record
+    let salaryDoc = await Salary.findOne({ phone, month });
+
+    if (!salaryDoc) {
+      // ✅ Create new if not exists
+      salaryDoc = new Salary({
+        phone,
+        month,
+        bonus: 0,
+        deductions: 0,
+        net: 0,
+        days: [],
+      });
+    } else {
+      // 🔄 Remove previous entry for the same day (to avoid duplicates)
+      salaryDoc.days = salaryDoc.days.filter(d => d.date !== day);
+    }
+
+    // ➕ Add new day's data
+    salaryDoc.days.push({
+      date: day,
+      hoursWorked,
+      dailyWage,
+    });
+
+    // 🧮 Recalculate net salary
+    const totalWages = salaryDoc.days.reduce((sum, d) => sum + d.dailyWage, 0);
+    salaryDoc.net = totalWages + salaryDoc.bonus - salaryDoc.deductions;
+
+    // 💾 Save the document
+    await salaryDoc.save();
+
+    return res.status(200).json({ message: "Salary updated successfully", salary: salaryDoc });
+
+  } catch (error) {
+    console.error("Error updating/creating salary:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+
 
 
 exports.addOrUpdateSalary = async (req, res) => {
@@ -96,3 +152,5 @@ exports.getAllSalaries = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+

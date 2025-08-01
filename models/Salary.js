@@ -9,7 +9,6 @@ const daySchema = new mongoose.Schema({
 const salarySchema = new mongoose.Schema({
   phone: String,
   month: String, // e.g., '2025-07'
-  basic: Number,
   bonus: Number,
   deductions: Number,
   net: Number,
