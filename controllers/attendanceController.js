@@ -61,7 +61,7 @@ exports.upsertDailyAttendance = async (req, res) => {
     await doc.save();
 
 
-      const user = await User.findOne({ mobile: phone });
+    const user = await User.findOne({ mobile: phone });
     if (!user) return res.status(404).json({ error: "User not found for salary" });
 
     const perDaySalary = user.salary || 0;
@@ -95,6 +95,8 @@ exports.upsertDailyAttendance = async (req, res) => {
     // 🧮 Recalculate net salary
     const totalWages = salaryDoc.days.reduce((sum, d) => sum + d.dailyWage, 0);
     salaryDoc.net = totalWages + salaryDoc.bonus - salaryDoc.deductions;
+
+    console.log(salaryDoc)
 
     // 💾 Save the document
     await salaryDoc.save();
