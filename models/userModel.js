@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema({
 
     required: true 
   },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  salary:{type:Number}
 });
 
 // Encrypt password before saving

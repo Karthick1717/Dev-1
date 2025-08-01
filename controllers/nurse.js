@@ -34,4 +34,33 @@ const updateNurseEmail = async (req, res) => {
   }
 };
 
-module.exports = { getNurse ,updateNurseEmail };
+const User = require("../models/userModel"); // Adjust path if needed
+
+const updateSalary = async (req, res) => {
+  const { salary, mobile } = req.body;
+
+  try {
+    if (!mobile || salary === undefined) {
+      return res.status(400).json({ message: "Mobile and salary are required" });
+    }
+
+    const user = await User.findOne({ mobile });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.salary = salary;
+
+    await user.save();
+
+    res.status(200).json({ message: "Salary updated successfully", user });
+  } catch (error) {
+    console.error("Error updating salary:", error);
+    res.status(500).json({ message: "Server error while updating salary" });
+  }
+};
+
+
+
+module.exports = { getNurse ,updateNurseEmail,updateSalary };
