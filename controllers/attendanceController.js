@@ -14,7 +14,6 @@ exports.upsertDailyAttendance = async (req, res) => {
     const currentTime = new Date();
 
     if (!doc) {
-      // Create new attendance doc with startTime
       doc = new Attendance({
         phone,
         month,
@@ -27,11 +26,9 @@ exports.upsertDailyAttendance = async (req, res) => {
       return res.status(200).json({ message: "Start time recorded", attendance: doc });
     }
 
-    // Find day record
     let existingDay = doc.records.find((r) => r.day === day);
 
     if (!existingDay) {
-      // No record for this day, create one with startTime
       doc.records.push({
         day,
         startTime: currentTime,
@@ -41,7 +38,6 @@ exports.upsertDailyAttendance = async (req, res) => {
     }
 
     if (!existingDay.startTime) {
-      // If startTime missing, set it now
       existingDay.startTime = currentTime;
       existingDay.endTime = undefined;
       existingDay.totalHours = undefined;
@@ -49,25 +45,23 @@ exports.upsertDailyAttendance = async (req, res) => {
       return res.status(200).json({ message: "Start time recorded", attendance: doc });
     }
 
-    // Update endTime on every scan after startTime
+    // 📍 Mark end time
     existingDay.endTime = currentTime;
-    existingDay.totalHours = (existingDay.endTime - existingDay.startTime) / (1000 * 60 * 60); // in hours
+    existingDay.totalHours = +((existingDay.endTime - existingDay.startTime) / (1000 * 60 * 60)).toFixed(2); // in hours
     const hoursWorked = existingDay.totalHours;
 
     await doc.save();
 
-    // 🔍 Fetch user's per-day salary
+    // 🎯 Salary update
     const user = await User.findOne({ mobile: phone });
     if (!user) return res.status(404).json({ error: "User not found for salary calculation" });
 
     const perDaySalary = user.salary || 0;
     const dailyWage = hoursWorked * perDaySalary;
 
-    // 💰 Update or create Salary document
     let salaryDoc = await Salary.findOne({ phone, month });
 
     if (!salaryDoc) {
-      // Create new salary doc
       salaryDoc = new Salary({
         phone,
         month,
@@ -76,19 +70,24 @@ exports.upsertDailyAttendance = async (req, res) => {
         net: 0,
         days: [],
       });
-    } else {
-      // Remove existing day entry (if any) to prevent duplicates
-      salaryDoc.days = salaryDoc.days.filter(d => d.date !== day);
     }
 
-    // ➕ Add current day's data
-    salaryDoc.days.push({
-      date: day,
-      hoursWorked,
-      dailyWage,
-    });
+    const existingSalaryDay = salaryDoc.days.find(d => d.date === day);
 
-    // 🧮 Recalculate net salary
+    if (existingSalaryDay) {
+      // 🔁 Just update it if already exists
+      existingSalaryDay.hoursWorked = hoursWorked;
+      existingSalaryDay.dailyWage = dailyWage;
+    } else {
+      // ➕ Push new
+      salaryDoc.days.push({
+        date: day,
+        hoursWorked,
+        dailyWage,
+      });
+    }
+
+    // 🧮 Recalculate net
     const totalWages = salaryDoc.days.reduce((sum, d) => sum + d.dailyWage, 0);
     salaryDoc.net = totalWages + salaryDoc.bonus - salaryDoc.deductions;
 
@@ -105,6 +104,7 @@ exports.upsertDailyAttendance = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 
